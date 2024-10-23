@@ -41,7 +41,7 @@ stdout_handler.setFormatter(console_formatter)
 
 logger.addHandler(stdout_handler)
 
-WHITE_LISTED_DOMAINS=open("./white_listed_domains.txt").readlines()
+WHITE_LISTED_DOMAINS=open("./white_listed_domains.txt").read().splitlines()
 
 def handle_args():
     #isn dst_port dst_ip
@@ -127,7 +127,7 @@ def main():
 def contains_illegal_domain(pkt):
     #TODO match by regex, not concrete domain name to prevent redirection abuse
     for qd in pkt[DNS].qd:
-        if qd.qname not in WHITE_LISTED_DOMAINS:
+        if qd.qname.decode() not in WHITE_LISTED_DOMAINS:
             logger.error(f"illegal domain name was tried to be resolved : {qd.qname}")
             logger.error("device info : ")
             device_info = pkg[Ether].src if Ether in pkt else ""
