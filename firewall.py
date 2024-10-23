@@ -41,9 +41,7 @@ stdout_handler.setFormatter(console_formatter)
 
 logger.addHandler(stdout_handler)
 
-WHITE_LISTED_DOMAINS=[\
-        b"google.com."
-]
+WHITE_LISTED_DOMAINS=open("./white_listed_domains.txt").readlines()
 
 def handle_args():
     #isn dst_port dst_ip
@@ -60,10 +58,12 @@ def handle_args():
 
     return(p.parse_args())
 
-def nfque_clean_up(nfque, RULE_NUM):
+def nfque_clean_up(nfque, RULE_NUM, RULE_LEN):
     # Cleanup
     nfque.unbind()
-    subprocess.run(['/usr/sbin/iptables', '-D', 'FORWARD', RULE_NUM])
+    for i in range(RULE_LEN):
+        subprocess.run(['/usr/sbin/iptables', '-D', 'FORWARD', RULE_NUM])
+        subprocess.run(['/usr/sbin/iptables', '-D', 'OUTPUT', RULE_NUM])
 
 
 def main():
@@ -77,14 +77,30 @@ def main():
     QUE_NUM = 0
 
     # Setup iptables rules to collect traffic
+    RULE_LEN = 0    
     RULE_NUM = '1'
     interceptRule = ['/usr/sbin/iptables', '-t', 'filter', '-I', 'FORWARD', RULE_NUM]
     interceptRule.extend(['--protocol', 'udp'])
     interceptRule.extend(['--dport', "53"])
     interceptRule.extend(['--jump', 'NFQUEUE', '--queue-num', str(QUE_NUM)])
     subprocess.run(interceptRule)
+    RULE_LEN += 1
 
     interceptRule = ['/usr/sbin/iptables', '-t', 'filter', '-I', 'FORWARD', RULE_NUM]
+    interceptRule.extend(['--protocol', 'tcp'])
+    interceptRule.extend(['--dport', "53"])
+    interceptRule.extend(['--jump', 'NFQUEUE', '--queue-num', str(QUE_NUM)])
+    subprocess.run(interceptRule)
+    RULE_LEN += 1
+
+
+    interceptRule = ['/usr/sbin/iptables', '-t', 'filter', '-I', 'OUTPUT', RULE_NUM]
+    interceptRule.extend(['--protocol', 'udp'])
+    interceptRule.extend(['--dport', "53"])
+    interceptRule.extend(['--jump', 'NFQUEUE', '--queue-num', str(QUE_NUM)])
+    subprocess.run(interceptRule)
+
+    interceptRule = ['/usr/sbin/iptables', '-t', 'filter', '-I', 'OUTPUT', RULE_NUM]
     interceptRule.extend(['--protocol', 'tcp'])
     interceptRule.extend(['--dport', "53"])
     interceptRule.extend(['--jump', 'NFQUEUE', '--queue-num', str(QUE_NUM)])
@@ -103,9 +119,9 @@ def main():
         logger.info('User interupt, exiting')
     except Exception as e:
         print(e)
-        nfque_clean_up(nfque, RULE_NUM)
+        nfque_clean_up(nfque, RULE_NUM, RULE_LEN)
         exit(1)
-    nfque_clean_up(nfque, RULE_NUM)
+    nfque_clean_up(nfque, RULE_NUM, RULE_LEN)
     exit(0)
 
 def contains_illegal_domain(pkt):
