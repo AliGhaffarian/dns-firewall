@@ -12,6 +12,10 @@ import logging.config
 import colorlog
 import sys
 
+"""
+default configs for the loggers in the rafece2
+"""
+
 # Define the format and log colors
 log_format = '%(asctime)s [%(levelname)s] %(name)s [%(funcName)s]: %(message)s'
 log_colors = {
@@ -36,8 +40,23 @@ stdout_handler = logging.StreamHandler(sys.stdout)
 stdout_handler.setFormatter(console_formatter)
 
 logger.addHandler(stdout_handler)
-black_listed_ip_ranges_file_name = "./black_listed_ip_ranges.txt"
+
 WHITE_LISTED_DOMAINS=open("./white_listed_domains.txt").read().splitlines()
+
+def handle_args():
+    #isn dst_port dst_ip
+    p = argparse.ArgumentParser(description=__doc__,
+        formatter_class=argparse.RawDescriptionHelpFormatter)
+
+    p.add_argument("-s", "--seq", type=int, required = True, 
+                    help="tcp sequence to drop")
+    p.add_argument("-p", "--dport", type=int,
+                    help="dst port number")
+    p.add_argument("-i", "--dst_ip", type=str,
+                    help="dst ip address")
+                    
+
+    return(p.parse_args())
 
 def nfque_clean_up(nfque, RULE_NUM, RULE_LEN):
     # Cleanup
@@ -64,10 +83,10 @@ def main():
     global args
     #args = handle_args()
 
-    
+    BLACK_LISTED_IP_FILE_NAME = "./black_listed_ip_ranges.txt"
     RULE_LEN = 0    
-    logger.info(f"applying black listed ips from {black_listed_ip_ranges_file_name}")
-    RULE_LEN += drop_black_listed_ip_ranges(black_listed_ip_ranges_file_name)
+    logger.info(f"applying black listed ips from {BLACK_LISTED_IP_FILE_NAME}")
+    RULE_LEN += drop_black_listed_ip_ranges(BLACK_LISTED_IP_FILE_NAME)
 
     # The NFQUEUE to use, just need to be consitent between nfqueue and iptables
     QUE_NUM = 0
