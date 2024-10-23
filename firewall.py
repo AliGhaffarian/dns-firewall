@@ -65,19 +65,30 @@ def nfque_clean_up(nfque, RULE_NUM, RULE_LEN):
         subprocess.run(['/usr/sbin/iptables', '-D', 'FORWARD', RULE_NUM])
         subprocess.run(['/usr/sbin/iptables', '-D', 'OUTPUT', RULE_NUM])
 
-
+def drop_black_listed_ip_ranges(file_name):
+    ipranges = open(file_name).read().splitlines()
+    rules_len = 0
+    for iprange in ipranges:
+        subprocess.run(["sudo", "iptables" ,"-A", "FORWARD", "-d", iprange, "-j" "DROP"])
+        subprocess.run(["sudo", "iptables" ,"-A", "OUTPUT", "-d", iprange, "-j" "DROP"])
+        rules_len += 1
+    return rules_len
+    
 def main():
 
 
     global args
     #args = handle_args()
 
+    black_listed_ip_ranges_file_name = "./black_listed_ip_ranges.txt"
+    RULE_LEN = 0    
+    logger.info(f"applying black listed ips from {black_listed_ip_ranges_file_name}")
+    RULE_LEN += drop_black_listed_ip_ranges(black_listed_ip_ranges_file_name)
 
     # The NFQUEUE to use, just need to be consitent between nfqueue and iptables
     QUE_NUM = 0
 
     # Setup iptables rules to collect traffic
-    RULE_LEN = 0    
     RULE_NUM = '1'
     interceptRule = ['/usr/sbin/iptables', '-t', 'filter', '-I', 'FORWARD', RULE_NUM]
     interceptRule.extend(['--protocol', 'udp'])
