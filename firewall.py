@@ -92,11 +92,9 @@ def main():
 
 
 
-    # Setup the nfqueue with alter_packets function
     nfque = netfilterqueue.NetfilterQueue()
     nfque.bind(QUE_NUM, filter_packet)
 
-    # Run until user exit or end of tream
     try:
         logger.info("initializing the firewall")
         logger.info(f"white listed domains : {WHITE_LISTED_DOMAINS}")
