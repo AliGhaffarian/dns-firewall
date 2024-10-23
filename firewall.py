@@ -115,10 +115,10 @@ def contains_illegal_domain(pkt):
     for qd in pkt[DNS].qd:
         if qd.qname not in WHITE_LISTED_DOMAINS:
             logger.error(f"illegal domain name was tried to be resolved : {qd.qname}")
-            logger.info("device info : ")
+            logger.error("device info : ")
             device_info = pkg[Ether].src if Ether in pkt else ""
             device_info = f" {pkt[IP].src} --> {pkt[IP].dst}"
-            logger.info(device_info)
+            logger.error(device_info)
             return True
 
     return False
