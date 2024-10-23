@@ -69,6 +69,9 @@ def drop_black_listed_ip_ranges(file_name):
     ipranges = open(file_name).read().splitlines()
     rules_len = 0
     for iprange in ipranges:
+        if iprange.startswith("#"):
+            logger.debug(f"ignoring rule line {iprange}")
+            continue
         subprocess.run(["sudo", "iptables" ,"-A", "FORWARD", "-d", iprange, "-j" "DROP"])
         subprocess.run(["sudo", "iptables" ,"-A", "OUTPUT", "-d", iprange, "-j" "DROP"])
         rules_len += 1
